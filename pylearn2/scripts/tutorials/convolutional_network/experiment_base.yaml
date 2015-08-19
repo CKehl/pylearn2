@@ -1,0 +1,91 @@
+!obj:pylearn2.train.Train {
+    dataset: &train !obj:pylearn2.datasets.experiment.Experiment {
+        which_set: 'train',
+        which_experiment: 'S100',
+        gcn: 55.0,
+    },
+    model: !obj:autoencoder.Autoencoder {
+        batch_size: %(batch_size)i,
+        seed: 12345,
+        input_space: !obj:pylearn2.space.Conv2DSpace {
+            shape: [32, 32],
+            num_channels: 3
+        },
+        layers: [ !obj:pylearn2.models.mlp.ConvRectifiedLinear {
+                     layer_name: 'h1',
+                     output_channels: %(output_channels_h1)i,
+                     init_bias: 1,
+                     irange: .01,
+                     kernel_shape: [11, 11],
+                     pool_shape: [3, 3],
+                     pool_stride: [2, 2],
+                     max_kernel_norm: 1.8
+                 }, !obj:pylearn2.models.mlp.ConvRectifiedLinear {
+                     layer_name: 'h2',
+                     output_channels: %(output_channels_h2)i,
+                     init_bias: 1,
+                     irange: .01,
+                     kernel_shape: [5, 5],
+                     pool_shape: [3, 3],
+                     pool_stride: [2, 2],
+                     max_kernel_norm: 1.8
+                 }, !obj:pylearn2.models.mlp.Sigmoid {
+                     layer_name: 'sig',
+                     dim: 3072,
+                     init_bias: 1,
+                     sparse_init: 15,
+                     max_col_norm: 1.8,
+                 },
+                ],
+    },
+    algorithm: !obj:pylearn2.training_algorithms.sgd.SGD {
+        batch_size: %(batch_size)i,
+        train_iteration_mode: even_batchwise_shuffled_sequential,
+        monitor_iteration_mode: even_batchwise_shuffled_sequential,
+        learning_rate: 0.1,
+        learning_rule: !obj:pylearn2.training_algorithms.learning_rule.Momentum {
+            init_momentum: .1
+        },
+        monitoring_dataset:
+            {
+                'valid' : &valid !obj:pylearn2.datasets.experiment.Experiment {
+                              which_set: 'valid',
+                              which_experiment: 'S100',
+                          },
+                'test'  : &test !obj:pylearn2.datasets.experiment.Experiment {
+                              which_set: 'test',
+                              which_experiment: 'S100',
+                          },
+            },
+        cost: !obj:pylearn2.costs.mlp.dropout.Dropout {
+            input_include_probs: { 'sig': .8 },
+            input_scales: { 'sig': 1.0 }
+        },
+        termination_criterion: !obj:pylearn2.termination_criteria.And {
+            criteria: [
+                !obj:pylearn2.termination_criteria.EpochCounter {
+                    max_epochs: %(max_epochs)i
+                },
+                !obj:pylearn2.termination_criteria.MonitorBased {
+                    channel_name: "valid_objective",
+                    prop_decrease: 0.,
+                    N: 100,
+                },
+            ]
+        },
+        update_callbacks: !obj:pylearn2.training_algorithms.sgd.ExponentialDecay {
+            decay_factor: 1.000004,
+            min_lr: .000001,
+        }
+    },
+    extensions:
+        [
+        !obj:pylearn2.training_algorithms.learning_rule.MomentumAdjustor {
+            start: 1,
+            saturate: 20,
+            final_momentum: .99
+        },
+    ],
+    save_path: "%(base_save_path)s/mlp_pretrained_model.pkl",
+    save_freq: 1
+}

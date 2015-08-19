@@ -1,0 +1,11 @@
+#!/bin/bash
+#CPU accounting is not enforced currently.
+#SBATCH -A cke061 
+#SBATCH -n 1
+#SBATCH --ntasks-per-node=4
+#SBATCH --time=04:00:00
+
+. /etc/bashrc
+
+source /scratch/ckehl/virtualenv-12.1.0/CKpython/bin/activate
+time python train_experiment_rp3_s100_pretrained.py

@@ -1,0 +1,29 @@
+#!/bin/bash
+#
+#$ -cwd
+#$ -S /bin/bash
+#$ -l gpu=C2050
+#$ -l h_rt=03:00:00
+
+. /etc/bashrc
+
+module load sge
+module add gcc/4.8.1
+module add cmake/2.8.6
+module add cuda55/toolkit/5.5.22
+module add intel/compiler/64/13.3/2013.3.163
+module add intel/ipp/64/7.1/2013_3.163
+module add intel/mkl/64/11.0/2013_3.163
+module add intel/tbb/64/4.1/2013_3.163
+module add intel-mpi/64/4.0.3/008
+module add opencl-nvidia/5.5
+module add blas/gcc/64/1
+module add lapack/gcc/64/3.3.0
+module add scalapack/gcc/64/1.8.0
+module add boost/1.54.0
+module add python/2.6.6
+export PYLEARN2_DATA_PATH=/var/scratch/ckehl/data
+export THEANO_FLAGS="device=gpu"
+
+source /var/scratch/ckehl/virtualenv-12.1.0/CKpython/bin/activate
+time python train_experiment_rp3_s100.py

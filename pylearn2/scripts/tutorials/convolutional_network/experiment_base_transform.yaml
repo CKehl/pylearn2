@@ -1,0 +1,29 @@
+!obj:pylearn2.train.Train {
+    dataset: &train !obj:pylearn2.datasets.transformer_dataset.TransformerDataset {
+        raw: !obj:pylearn2.datasets.experiment.Experiment {
+            which_set: 'train',
+            which_experiment: 'S100',
+            gcn: 55.0,
+        },
+        transformer: !pkl: "%(base_save_path)s/mlp_pretrained_model.pkl",
+    },
+    model: !obj:pylearn2.models.autoencoder.Autoencoder {
+        nvis : %(output_channels_h3)i,
+        nhid : %(output_channels_h3)i,
+        irange : 0.05,
+        act_enc: "sigmoid",
+        act_dec: null,    # Linear activation on the decoder side.
+    },
+    algorithm: !obj:pylearn2.training_algorithms.sgd.SGD {
+        learning_rate : 1e-3,
+        batch_size : 100,
+        monitoring_batches : %(batch_size)i,
+        monitoring_dataset : *train,
+        cost : !obj:pylearn2.costs.autoencoder.MeanSquaredReconstructionError {},
+        termination_criterion : !obj:pylearn2.termination_criteria.EpochCounter {
+            max_epochs: %(max_epochs)i,
+        },
+    },
+    save_path: "%(base_save_path)s/pretrained_model.pkl",
+    save_freq: 1
+}
